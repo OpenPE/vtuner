@@ -1,0 +1,8 @@
+AC_INIT([vtunerhelper], [1.0])
+AM_INIT_AUTOMAKE($PACKAGE_NAME, $PACKAGE_VERSION)
+
+AC_PROG_CC
+
+LDFLAGS="-lpthread"
+
+AC_OUTPUT([Makefile])
