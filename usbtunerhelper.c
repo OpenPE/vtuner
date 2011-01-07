@@ -119,7 +119,7 @@ void sort_adapters()
 	}
 }
 
-void scan_adapters()
+int scan_adapters()
 {
 	DIR *dirusb, *dirdev, *dirvtun;
 	struct dirent *edirusb, *edirdev, *edirvtun;
@@ -127,9 +127,9 @@ void scan_adapters()
 
 	/* adapters detect */
 	dirusb = opendir(SYS_USB_DEVICES_DIR);
-	if (!dirusb) return;
+	if (!dirusb) return -1;
 
-	while ((edirusb = readdir (dirusb)) != NULL && adaptercount < MAX_ADAPTERS)
+	while ((edirusb = readdir(dirusb)) != NULL && adaptercount < MAX_ADAPTERS)
 	{
 		char devdir[256];
 		if (edirusb->d_name[0] == '.') continue;
@@ -139,7 +139,7 @@ void scan_adapters()
 		dirdev = opendir(devdir);
 		if (!dirdev) continue;
 
-		while ((edirdev = readdir (dirdev)) != NULL && adaptercount < MAX_ADAPTERS)
+		while ((edirdev = readdir(dirdev)) != NULL && adaptercount < MAX_ADAPTERS)
 		{
 			FILE *fd;
 			char filename[256];
@@ -201,6 +201,7 @@ void scan_adapters()
 			printf("usb device %s (adapter%d) not assigned\n", adapters[i].name, adapters[i].index);
 		}
 	}
+	return adaptercount;
 }
 
 
@@ -591,7 +592,11 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, sigint_handler);
 	signal(SIGINT, sigint_handler);
 
-	scan_adapters();
+	while (1)
+	{
+		if (scan_adapters() > 0) break;
+		sleep(5);
+	}
 
 	for (i = 0; i < adaptercount; i++)
 	{
