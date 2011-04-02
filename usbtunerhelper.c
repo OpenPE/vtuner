@@ -57,6 +57,7 @@ struct vtuner_message
 		__u32 ucb;
 		fe_sec_tone_mode_t tone;
 		fe_sec_voltage_t voltage;
+		struct dvb_diseqc_master_cmd diseqc_master_cmd;
 		fe_sec_mini_cmd_t burst;
 		__u16 pidlist[30];
 		unsigned char pad[72];
@@ -359,10 +360,10 @@ void *event_proc(void *ptr)
 				ioctl(adapter->frontend, FE_SET_TONE, &message.body.tone);
 				break;
 			case MSG_SEND_DISEQC_MSG:
-				ioctl(adapter->frontend, FE_DISEQC_SEND_MASTER_CMD, &message.body.pad);
+				ioctl(adapter->frontend, FE_DISEQC_SEND_MASTER_CMD, &message.body.diseqc_master_cmd);
 				break;
 			case MSG_SEND_DISEQC_BURST:
-				ioctl(adapter->frontend, FE_DISEQC_SEND_BURST, &message.body.pad);
+				ioctl(adapter->frontend, FE_DISEQC_SEND_BURST, &message.body.burst);
 				break;
 			case MSG_PIDLIST:
 				/* remove old pids */
