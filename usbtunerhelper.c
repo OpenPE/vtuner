@@ -38,13 +38,19 @@
 #define MSG_SEND_DISEQC_MSG      11
 #define MSG_SEND_DISEQC_BURST    13
 #define MSG_PIDLIST              14
+#define MSG_TYPE_CHANGED         15
+#define MSG_SET_PROPERTY         16
+#define MSG_GET_PROPERTY         17
 
 struct vtuner_message
 {
-	int type;
+	__s32 type;
 	union
 	{
 		struct dvb_frontend_parameters dvb_frontend_parameters;
+#if DVB_API_VERSION >= 5
+		struct dtv_property prop;
+#endif
 		fe_status_t status;
 		__u32 ber;
 		__u16 ss, snr;
@@ -53,7 +59,8 @@ struct vtuner_message
 		fe_sec_voltage_t voltage;
 		fe_sec_mini_cmd_t burst;
 		__u16 pidlist[30];
-		unsigned char pad[60];
+		unsigned char pad[72];
+		__u32 type_changed;
 	} body;
 };
 
@@ -417,9 +424,32 @@ void *event_proc(void *ptr)
 				}
 				break;
 			case MSG_SET_VOLTAGE:
+				ioctl(adapter->frontend, FE_SET_VOLTAGE, &message.body.voltage);
+				break;
 			case MSG_ENABLE_HIGH_VOLTAGE:
 				break;
-
+			case MSG_TYPE_CHANGED:
+				break;
+			case MSG_SET_PROPERTY:
+#if DVB_API_VERSION >= 5
+				{
+					struct dtv_properties props;
+					props.num = 1;
+					props.props = &message.body.prop;
+					ioctl(adapter->frontend, FE_SET_PROPERTY, &props);
+				}
+#endif
+				break;
+			case MSG_GET_PROPERTY:
+#if DVB_API_VERSION >= 5
+				{
+					struct dtv_properties props;
+					props.num = 1;
+					props.props = &message.body.prop;
+					ioctl(adapter->frontend, FE_GET_PROPERTY, &props);
+				}
+#endif
+				break;
 			default:
 				printf("Unknown vtuner message type: %d\n", message.type);
 				break;
