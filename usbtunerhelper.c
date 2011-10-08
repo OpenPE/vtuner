@@ -96,10 +96,10 @@ struct vtuner_adapter adapters[MAX_ADAPTERS];
 int adaptercount = 0;
 int vtunercount = 0;
 
-int running = 0;
+int running = 1;
 void sigint_handler(int sig)
 {
-	running = 1;
+	running = 0;
 }
 
 void sort_adapters()
@@ -142,18 +142,23 @@ int scan_adapters()
 		char devdir[256];
 		if (edirusb->d_name[0] == '.') continue;
 
-		sprintf(devdir, "%s/%s/device", SYS_USB_DEVICES_DIR, edirusb->d_name);
-
+		sprintf(devdir, "%s/%s/device/dvb", SYS_USB_DEVICES_DIR, edirusb->d_name);
 		dirdev = opendir(devdir);
-		if (!dirdev) continue;
+		if (!dirdev)
+		{
+			sprintf(devdir, "%s/%s/device", SYS_USB_DEVICES_DIR, edirusb->d_name);
+			dirdev = opendir(devdir);
+			if (!dirdev) continue;
+		}
 
 		while ((edirdev = readdir(dirdev)) != NULL && adaptercount < MAX_ADAPTERS)
 		{
 			FILE *fd;
 			char filename[256];
+			int namelen = strlen(edirdev->d_name);
 
-			if (strlen(edirdev->d_name) < 9) continue;
-			if (strcmp(edirdev->d_name + (strlen(edirdev->d_name) - 9), "frontend0")) continue;
+			if (namelen < 14) continue;
+			if (strcmp(edirdev->d_name + (namelen - 9), "frontend0")) continue;
 
 			sprintf(filename, "%s/%s/device/product", SYS_USB_DEVICES_DIR, edirusb->d_name);
 			fd = fopen(filename, "r");
@@ -176,7 +181,7 @@ int scan_adapters()
 				strcpy(adapters[adaptercount].name, "unknown frontend");
 			}
 
-			adapters[adaptercount].index = edirdev->d_name[7] - '0';
+			adapters[adaptercount].index = edirdev->d_name[namelen - 11] - '0';
 			adaptercount++;
 		}
 		closedir(dirdev);
@@ -293,7 +298,7 @@ void *pump_proc(void *ptr)
 {
 	struct vtuner_adapter *adapter = (struct vtuner_adapter *)ptr;
 
-	while (!running)
+	while (running)
 	{
 		struct timeval tv;
 		fd_set rset;
@@ -319,7 +324,7 @@ void *event_proc(void *ptr)
 	int i, j;
 	struct vtuner_adapter *adapter = (struct vtuner_adapter*)ptr;
 
-	while (!running)
+	while (running)
 	{
 		struct timeval tv;
 		fd_set xset;
@@ -623,7 +628,7 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, sigint_handler);
 	signal(SIGINT, sigint_handler);
 
-	while (1)
+	while (running)
 	{
 		if (scan_adapters() > 0) break;
 		sleep(5);
