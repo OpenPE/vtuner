@@ -362,13 +362,13 @@ void *event_proc(void *ptr)
 				ioctl(adapter->frontend, FE_READ_UNCORRECTED_BLOCKS, &message.body.ucb);
 				break;
 			case MSG_SET_TONE:
-				ioctl(adapter->frontend, FE_SET_TONE, &message.body.tone);
+				ioctl(adapter->frontend, FE_SET_TONE, message.body.tone);
 				break;
 			case MSG_SEND_DISEQC_MSG:
 				ioctl(adapter->frontend, FE_DISEQC_SEND_MASTER_CMD, &message.body.diseqc_master_cmd);
 				break;
 			case MSG_SEND_DISEQC_BURST:
-				ioctl(adapter->frontend, FE_DISEQC_SEND_BURST, &message.body.burst);
+				ioctl(adapter->frontend, FE_DISEQC_SEND_BURST, message.body.burst);
 				break;
 			case MSG_PIDLIST:
 				/* remove old pids */
@@ -430,9 +430,10 @@ void *event_proc(void *ptr)
 				}
 				break;
 			case MSG_SET_VOLTAGE:
-				ioctl(adapter->frontend, FE_SET_VOLTAGE, &message.body.voltage);
+				ioctl(adapter->frontend, FE_SET_VOLTAGE, message.body.voltage);
 				break;
 			case MSG_ENABLE_HIGH_VOLTAGE:
+				ioctl(adapter->frontend, FE_ENABLE_HIGH_LNB_VOLTAGE, message.body.voltage);
 				break;
 			case MSG_TYPE_CHANGED:
 				break;
