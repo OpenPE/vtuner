@@ -375,6 +375,7 @@ void *event_proc(void *ptr)
 				for (i = 0; i < 30; i++)
 				{
 					int found = 0;
+					if (adapter->pidlist[i] == 0xffff) continue;
 					for (j = 0; j < 30; j++)
 					{
 						if (adapter->pidlist[i] == message.body.pidlist[j])
@@ -386,21 +387,19 @@ void *event_proc(void *ptr)
 
 					if (found) continue;
 
-					if (adapter->pidlist[i] != 0xffff)
-					{
-						printf("DMX_REMOVE_PID %x\n", adapter->pidlist[i]);
+					printf("DMX_REMOVE_PID %x\n", adapter->pidlist[i]);
 #if DVB_API_VERSION > 3
-						ioctl(adapter->demux, DMX_REMOVE_PID, &adapter->pidlist[i]);
+					ioctl(adapter->demux, DMX_REMOVE_PID, &adapter->pidlist[i]);
 #else
-						ioctl(adapter->demux, DMX_REMOVE_PID, adapter->pidlist[i]);
+					ioctl(adapter->demux, DMX_REMOVE_PID, adapter->pidlist[i]);
 #endif
-					}
 				}
 
 				/* add new pids */
 				for (i = 0; i < 30; i++)
 				{
 					int found = 0;
+					if (message.body.pidlist[i] == 0xffff) continue;
 					for (j = 0; j < 30; j++)
 					{
 						if (message.body.pidlist[i] == adapter->pidlist[j])
@@ -412,15 +411,12 @@ void *event_proc(void *ptr)
 
 					if (found) continue;
 
-					if (message.body.pidlist[i] != 0xffff)
-					{
-						printf("DMX_ADD_PID %x\n", message.body.pidlist[i]);
+					printf("DMX_ADD_PID %x\n", message.body.pidlist[i]);
 #if DVB_API_VERSION > 3
-						ioctl(adapter->demux, DMX_ADD_PID, &message.body.pidlist[i]);
+					ioctl(adapter->demux, DMX_ADD_PID, &message.body.pidlist[i]);
 #else
-						ioctl(adapter->demux, DMX_ADD_PID, message.body.pidlist[i]);
+					ioctl(adapter->demux, DMX_ADD_PID, message.body.pidlist[i]);
 #endif
-					}
 				}
 
 				/* copy pids */
