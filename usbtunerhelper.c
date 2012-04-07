@@ -23,7 +23,8 @@
 #define VTUNER_SET_NAME     3
 #define VTUNER_SET_TYPE     4
 #define VTUNER_SET_HAS_OUTPUTS 5
-#define VTUNER_SET_FE_INFO 6
+#define VTUNER_SET_FE_INFO  6
+#define VTUNER_SET_DELSYS   7
 
 #define MSG_SET_FRONTEND         1
 #define MSG_GET_FRONTEND         2
@@ -544,6 +545,9 @@ int init_adapter(int id)
 	case FE_OFDM:
 		strcpy(type,"DVB-T");
 		break;
+	case FE_ATSC:
+		strcpy(type,"ATSC");
+		break;
 	default:
 		printf("Frontend type 0x%x not supported", fe_info.type);
 		goto error;
@@ -553,6 +557,19 @@ int init_adapter(int id)
 	ioctl(adapter->vtuner, VTUNER_SET_TYPE, type);
 	ioctl(adapter->vtuner, VTUNER_SET_FE_INFO, &fe_info);
 	ioctl(adapter->vtuner, VTUNER_SET_HAS_OUTPUTS, "no");
+#if DVB_API_VERSION > 5 || DVB_API_VERSION == 5 && DVB_API_VERSION_MINOR >= 5
+	{
+		struct dtv_properties props;
+		struct dtv_property p[1];
+		props.num = 1;
+		props.props = p;
+		p[0].cmd = DTV_ENUM_DELSYS;
+		if (ioctl(adapter->frontend, FE_GET_PROPERTY, &props) >= 0)
+		{
+			ioctl(adapter->vtuner, VTUNER_SET_DELSYS, p[0].u.buffer.data);
+		}
+	}
+#endif
 
 	memset(adapter->pidlist, 0xff, sizeof(adapter->pidlist));
 	adapter->buffer = malloc(BUFFER_SIZE);
